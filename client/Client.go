@@ -8,6 +8,16 @@ type Client struct {
 	transport *Transport
 }
 
+type Increment struct {
+	amount int64
+	async  bool
+}
+
+type Decrement struct {
+	amount int64
+	async  bool
+}
+
 func NewClient(appID, apiKey string) *Client {
 	client := new(Client)
 	client.transport = NewTransport(appID, apiKey)
@@ -33,8 +43,10 @@ func (c *Client) GetShardedCounter(counterName string) (interface{}, error) {
 }
 
 func (c *Client) IncrementShardedCounter(counterName string, async bool) (interface{}, error) {
-	params := `{"amount": 1, "async": }`
-	params[async] = async
+	params := &Increment{
+		amount:  1,
+		async: async,
+	}
 	return c.IncrementShardedCounterWithParams(counterName, params)
 }
 
@@ -43,8 +55,10 @@ func (c *Client) IncrementShardedCounterWithParams(counterName string, params in
 }
 
 func (c *Client) DecrementShardedCounter(counterName string, async bool) (interface{}, error) {
-	params := `{"amount": 1, "async": false}`
-	params[async] = async
+	params := &Decrement{
+		amount:  1,
+		async: async,
+	}
 	return c.DecrementShardedCounterWithParams(counterName, params)
 }
 
