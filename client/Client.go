@@ -42,3 +42,7 @@ func (c *Client) SetTimeout(connectTimeout int, readTimeout int) {
 func (c *Client) EncodeParams(body interface{}) string {
 	return c.transport.EncodeParams(body)
 }
+
+func (c *Client) InitShardedCounter(counterName string) *ShardedCounter {
+	return NewShardedCounter(c, counterName)
+}
