@@ -38,33 +38,6 @@ func (c *Client) SetTimeout(connectTimeout int, readTimeout int) {
 	c.transport.setTimeout(time.Duration(connectTimeout) * time.Millisecond, time.Duration(readTimeout) * time.Millisecond)
 }
 
-func (c *Client) GetShardedCounter(counterName string) (interface{}, error) {
-	return c.transport.request("GET", "/sharded_counters/" + counterName, nil, read)
-}
-
-func (c *Client) IncrementShardedCounter(counterName string, async bool) (interface{}, error) {
-	params := &Increment{
-		amount:  1,
-		async: async,
-	}
-	return c.IncrementShardedCounterWithParams(counterName, params)
-}
-
-func (c *Client) IncrementShardedCounterWithParams(counterName string, params interface{}) (interface{}, error) {
-	return c.transport.request("POST", "/sharded_counters/" + counterName + "/increments", params, write)
-}
-
-func (c *Client) DecrementShardedCounter(counterName string, async bool) (interface{}, error) {
-	params := &Decrement{
-		amount:  1,
-		async: async,
-	}
-	return c.DecrementShardedCounterWithParams(counterName, params)
-}
-
-func (c *Client) DecrementShardedCounterWithParams(counterName string, params interface{}) (interface{}, error) {
-	return c.transport.request("POST", "/sharded_counters/" + counterName + "/decrements", params, write)
-}
 
 func (c *Client) EncodeParams(body interface{}) string {
 	return c.transport.EncodeParams(body)
