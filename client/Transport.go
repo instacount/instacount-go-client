@@ -114,7 +114,7 @@ func (t *Transport) EncodeParams(params interface{}) string {
 	return v.Encode()
 }
 
-func (t *Transport) request(method, path string, body interface{}, typeCall int) (interface{}, error) {
+func (t *Transport) request(method, path string, body interface{}, typeCall int) (interface{}, *Errors, error) {
 	var host string = "api.instacount.io"
 	errorMsg := ""
 	//	if typeCall == write {
@@ -126,7 +126,7 @@ func (t *Transport) request(method, path string, body interface{}, typeCall int)
 	if !t.hostsProvided {
 		req, err := t.buildRequest(method, host, path, body)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		req = t.addHeaders(req)
 		resp, err := t.httpClient.Do(req)
@@ -146,7 +146,7 @@ func (t *Transport) request(method, path string, body interface{}, typeCall int)
 	for it := range t.hosts {
 		req, err := t.buildRequest(method, t.hosts[it], path, body)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		req = t.addHeaders(req)
 		resp, err := t.httpClient.Do(req)
@@ -164,7 +164,7 @@ func (t *Transport) request(method, path string, body interface{}, typeCall int)
 			resp.Body.Close()
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("Cannot reach any host. (%s)", errorMsg))
+	return nil, nil, errors.New(fmt.Sprintf("Cannot reach any host. (%s)", errorMsg))
 }
 
 func (t *Transport) buildRequest(method, host, path string, body interface{}) (*http.Request, error) {
@@ -203,20 +203,26 @@ func (t *Transport) addHeaders(req *http.Request) *http.Request {
 	return req
 }
 
-func (t *Transport) handleResponse(resp *http.Response) (interface{}, error) {
+func (t *Transport) handleResponse(resp *http.Response) (json.RawMessage, *Errors, error) {
 	res, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	var jsonResp interface{}
-	err = json.Unmarshal(res, &jsonResp)
 	if err != nil {
-		return nil, errors.New("Invalid JSON in the response")
+		return nil, nil, errors.New("Invalid JSON in the response")
 	}
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return jsonResp, nil
+		var jsonResp json.RawMessage
+		//var jsonResp interface{}
+		err = json.Unmarshal(res, &jsonResp)
+		return jsonResp, nil, nil
+	} else if resp.StatusCode >= 400 {
+		var errorsResp Errors
+		json.Unmarshal(res, &errorsResp)
+		errorsResp.StatuCode = resp.StatusCode
+		return nil, &errorsResp, nil
 	} else {
-		return nil, errors.New(string(res))
+		return nil, nil, errors.New("Invalid HTTP Response Code " + strconv.Itoa(resp.StatusCode))
 	}
 }
