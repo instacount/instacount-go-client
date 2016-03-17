@@ -7,6 +7,10 @@ An Instacount client for GO
 
 #Example
 ```
+import (
+	instacount "github.com/instacount/instacount-go-client/client"
+)
+
 var client *instacount.Client
 
 func initInstacount() {
